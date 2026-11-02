@@ -6,7 +6,7 @@
 
 **Poisson · Ball Pivoting · Alpha Shapes · Density-adaptive preprocessing**
 
-[Interactive lab](#interactive-geometry-lab) · [Measured results](#measured-results) · [Reproduce](#reproduce-the-benchmark) · [Technical notes](docs/ALGORITHMS.md)
+[Interactive lab](#interactive-geometry-lab) · [Measured results](#measured-results) · [Technical notes](docs/ALGORITHMS.md)
 
 </div>
 
@@ -90,33 +90,6 @@ robust3d demo
 
 Open <http://127.0.0.1:8050>. The Stanford meshes are downloaded by Open3D and cached on first use; Robust3D does not redistribute them.
 
-## Pipeline
-
-```mermaid
-flowchart LR
-    A[Reference mesh / upload] --> B[Surface sampling]
-    B --> C[Density + noise + missing cap + outliers]
-    C --> D{Preprocessing}
-    D -->|Baseline| E[Fixed-policy normal estimation]
-    D -->|Adaptive| F[Median k-NN scale]
-    F --> G[MAD outlier rejection]
-    G --> H[Spacing-scaled voxel equalization]
-    H --> I[Robust local PCA / MLS projection]
-    I --> J[Adaptive normal estimation]
-    E --> K{Reconstruct}
-    J --> K
-    K --> L[Poisson]
-    K --> M[Ball Pivoting]
-    K --> N[Alpha Shapes]
-    L --> O[Sampled surface evaluation]
-    M --> O
-    N --> O
-```
-
-The proposed preprocessing is deliberately classical and interpretable. Its distance thresholds are expressed in units of the measured local sample spacing, rather than in arbitrary object coordinates. A median-absolute-deviation rule rejects isolated points, voxel downsampling reduces density imbalance, one conservative local PCA projection suppresses normal-direction noise, and a spacing-scaled radius stabilizes oriented normal estimation.
-
-Read [`docs/ALGORITHMS.md`](docs/ALGORITHMS.md) for the algorithmic reasoning and [`docs/EXPERIMENTS.md`](docs/EXPERIMENTS.md) for the protocol.
-
 ## Command-line use
 
 List the built-in objects:
@@ -145,47 +118,6 @@ Use an uploaded mesh or point cloud:
 ```bash
 robust3d reconstruct --input scan.ply --algorithm bpa --output reconstruction.ply
 ```
-
-Python API:
-
-```python
-from robust3d import (
-    DegradationConfig,
-    PipelineConfig,
-    PreprocessConfig,
-    ReconstructionConfig,
-    run_pipeline,
-)
-
-result = run_pipeline(PipelineConfig(
-    object_name="bunny",
-    n_points=3500,
-    degradation=DegradationConfig(
-        density=0.55, noise_sigma=0.008,
-        missing_fraction=0.18, outlier_fraction=0.08, seed=7,
-    ),
-    preprocessing=PreprocessConfig(mode="adaptive"),
-    reconstruction=ReconstructionConfig(algorithm="poisson", poisson_depth=7),
-))
-
-print(result.metrics)
-```
-
-## Reproduce the benchmark
-
-The quick benchmark is suitable for CI and laptops:
-
-```bash
-robust3d experiment --config configs/quick.yaml --output results
-```
-
-The larger sweep uses three objects, seven degradation scenarios, 5,000 source samples, 10,000 evaluation samples, and Poisson depth 8:
-
-```bash
-robust3d experiment --config configs/full.yaml --output results/full
-```
-
-Each run writes raw CSV/JSON, environment metadata, a Markdown report, charts, representative PLY meshes, and a comparison image. Failed algorithm/parameter combinations are recorded rather than silently discarded.
 
 ## Metrics
 
@@ -221,15 +153,6 @@ Robust3D/
 └── tests/                       # deterministic unit + integration tests
 ```
 
-## Verification
-
-```bash
-python -m pytest
-python -m ruff check .
-```
-
-The current suite exercises deterministic degradation, scale estimation, adaptive outlier rejection, all three real reconstructors, metric bounds, and the dashboard HTTP entry point.
-
 ## Limitations
 
 - Poisson can produce visually plausible closure over missing regions; this is not evidence that the hidden surface is correct.
@@ -238,16 +161,6 @@ The current suite exercises deterministic degradation, scale estimation, adaptiv
 - The adaptive stage targets noise and isolated outliers. It is intentionally bypassable because it can oversmooth clean high-frequency detail.
 - Uploads that contain only points have no ground-truth surface, so reference-based metrics are marked unavailable.
 - The benchmark is a controlled undergraduate study, not a claim of state-of-the-art reconstruction.
-
-## Data and references
-
-Stanford Bunny and Armadillo are fetched from the [Stanford 3D Scanning Repository](https://graphics.stanford.edu/data/3Dscanrep/) through Open3D's data helper. Procedural objects provide license-safe topology stress tests. No dataset files are committed; review each source's terms before redistribution. See [`docs/DATASETS.md`](docs/DATASETS.md).
-
-Core methods:
-
-1. M. Kazhdan, M. Bolitho, and H. Hoppe, “Poisson Surface Reconstruction,” SGP 2006.
-2. F. Bernardini et al., “The Ball-Pivoting Algorithm for Surface Reconstruction,” IEEE TVCG, 1999.
-3. H. Edelsbrunner and E. P. Mücke, “Three-Dimensional Alpha Shapes,” ACM TOG, 1994.
 
 ## License
 
