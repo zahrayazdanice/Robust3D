@@ -1,0 +1,13 @@
+datasets: [bunny, torus]
+points: 1800
+evaluation_samples: 2500
+seed: 7
+preprocessing: [baseline, adaptive]
+algorithms: [poisson, bpa, alpha]
+poisson_depth: 6
+scenarios:
+  clean: {density: 1.0, noise_sigma: 0.0, missing_fraction: 0.0, outlier_fraction: 0.0}
+  noisy: {density: 0.70, noise_sigma: 0.008, missing_fraction: 0.0, outlier_fraction: 0.0}
+  incomplete: {density: 0.65, noise_sigma: 0.002, missing_fraction: 0.25, outlier_fraction: 0.0}
+  combined: {density: 0.55, noise_sigma: 0.008, missing_fraction: 0.18, outlier_fraction: 0.08}
+

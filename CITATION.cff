@@ -1,0 +1,10 @@
+cff-version: 1.2.0
+message: "If you use Robust3D, please cite this repository."
+title: "Robust3D: Surface Reconstruction from Noisy and Incomplete Point Clouds"
+type: software
+authors:
+  - given-names: Zahra
+version: 1.0.0
+date-released: 2026-10-21
+license: MIT
+
